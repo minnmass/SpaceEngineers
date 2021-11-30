@@ -1,5 +1,18 @@
 ﻿R e a d m e
 -----------
 
-In this file you can include any instructions or other comments you want to have injected onto the 
-top of your final script. You can safely delete this file if you do not want any such comments.
+Monitors exactly one docking connector and up to three groups.
+
+The "Disable On Dock" group's batteries are set to recharge, tanks are set to stockpile, and other blocks are turned off when the connector docks.
+
+The "Enable On Undock" group's batteries are set to auto, tanks are turned to not stockpile, and other blocks are turned on when the connector undocks.
+
+The "Toggle On Dock" group does both.
+
+If the script can't find exactly one candidate docking connector, it spins until it can find one. The connector's name must include the Docking Connector Key, and may include other text.
+
+The script can auto-scan about every 2 minutes; there's a config flag that controls that.
+
+The script can be instructed to scan with a parameter (defaults to "initialize") as-needed.
+
+All "const"s are configuration.
