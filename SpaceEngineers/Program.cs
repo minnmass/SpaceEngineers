@@ -25,8 +25,6 @@ namespace IngameScript {
 		private bool wasDockedOnLastRun = false;
 
 		public Program() {
-			Runtime.UpdateFrequency |= UpdateFrequency.Update100;
-
 			Initialize();
 		}
 
@@ -91,8 +89,6 @@ namespace IngameScript {
 			tanksToUnstockpile.Clear();
 			batteriesToAuto.Clear();
 
-			Runtime.UpdateFrequency = UpdateFrequency.Update100;
-
 			GridTerminalSystem.SearchBlocksOfName(DockingConnectorKey, terminalScratch);
 			if (terminalScratch.Count == 1 && terminalScratch[0] is IMyShipConnector) {
 				connector = terminalScratch[0] as IMyShipConnector;
@@ -125,17 +121,21 @@ namespace IngameScript {
 			}
 
 			if (
-				batteriesToAuto.Count > 0 ||
-				batteriesToRecharge.Count > 0 ||
-				tanksToStockpile.Count > 0 ||
-				tanksToUnstockpile.Count > 0 ||
-				blocksToEnable.Count > 0 ||
-				blocksToDisable.Count > 0
+				((Runtime.UpdateFrequency & UpdateFrequency.Update10) != 0) &&
+				(
+					batteriesToAuto.Count > 0 ||
+					batteriesToRecharge.Count > 0 ||
+					tanksToStockpile.Count > 0 ||
+					tanksToUnstockpile.Count > 0 ||
+					blocksToEnable.Count > 0 ||
+					blocksToDisable.Count > 0
+				)
 			) {
 				Log("Setting update frequency to 10.");
 				Runtime.UpdateFrequency |= UpdateFrequency.Update10;
 			} else {
-				Log("Leaving update frequency at 100.");
+				Log("Didn't find any blocks to modify; setting update frequency to 100.");
+				Runtime.UpdateFrequency = UpdateFrequency.Update100;
 			}
 
 		}
