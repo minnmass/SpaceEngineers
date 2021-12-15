@@ -1,78 +1,166 @@
-﻿using Sandbox.Game.EntityComponents;
-using Sandbox.ModAPI.Ingame;
-using Sandbox.ModAPI.Interfaces;
-using SpaceEngineers.Game.ModAPI.Ingame;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using VRage;
-using VRage.Collections;
-using VRage.Game;
-using VRage.Game.Components;
-using VRage.Game.GUI.TextPanel;
-using VRage.Game.ModAPI.Ingame;
-using VRage.Game.ModAPI.Ingame.Utilities;
-using VRage.Game.ObjectBuilders.Definitions;
-using VRageMath;
+using Sandbox.ModAPI.Ingame;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
-		// This file contains your actual script.
-		//
-		// You can either keep all your code here, or you can create separate
-		// code files to make your program easier to navigate while coding.
-		//
-		// In order to add a new utility class, right-click on your project, 
-		// select 'New' then 'Add Item...'. Now find the 'Space Engineers'
-		// category under 'Visual C# Items' on the left hand side, and select
-		// 'Utility Class' in the main area. Name it in the box below, and
-		// press OK. This utility class will be merged in with your code when
-		// deploying your final script.
-		//
-		// You can also simply create a new utility class manually, you don't
-		// have to use the template if you don't want to. Just do so the first
-		// time to see what a utility class looks like.
-		// 
-		// Go to:
-		// https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
-		//
-		// to learn more about ingame scripts.
+		private const string GroupToToggle = "Toggle On Dock";
+		private const string GroupToDisable = "Disable On Dock";
+		private const string GroupToEnable = "Enable On Undock";
+		private const string DockingConnectorKey = "[AutoToggle]";
+		private const string ReinitializeArgument = "initialize";
+		private const bool AutoScan = true;
+
+		/// code below here
+
+		private List<IMyFunctionalBlock> blocksToEnable = new List<IMyFunctionalBlock>();
+		private List<IMyGasTank> tanksToStockpile = new List<IMyGasTank>();
+		private List<IMyBatteryBlock> batteriesToRecharge = new List<IMyBatteryBlock>();
+
+		private List<IMyFunctionalBlock> blocksToDisable = new List<IMyFunctionalBlock>();
+		private List<IMyGasTank> tanksToUnstockpile = new List<IMyGasTank>();
+		private List<IMyBatteryBlock> batteriesToAuto = new List<IMyBatteryBlock>();
+
+		private IMyShipConnector connector;
+		private bool wasDockedOnLastRun = false;
 
 		public Program() {
-			// The constructor, called only once every session and
-			// always before any other method is called. Use it to
-			// initialize your script. 
-			//     
-			// The constructor is optional and can be removed if not
-			// needed.
-			// 
-			// It's recommended to set Runtime.UpdateFrequency 
-			// here, which will allow your script to run itself without a 
-			// timer block.
-		}
-
-		public void Save() {
-			// Called when the program needs to save its state. Use
-			// this method to save your state to the Storage field
-			// or some other means. 
-			// 
-			// This method is optional and can be removed if not
-			// needed.
+			Initialize();
 		}
 
 		public void Main(string argument, UpdateType updateSource) {
-			// The main entry point of the script, invoked every time
-			// one of the programmable block's Run actions are invoked,
-			// or the script updates itself. The updateSource argument
-			// describes where the update came from. Be aware that the
-			// updateSource is a  bitfield  and might contain more than 
-			// one update type.
-			// 
-			// The method itself is required, but the arguments above
-			// can be removed if not needed.
+			if (
+				connector == null ||
+				(AutoScan && ((updateSource & UpdateType.Update100) != 0)) || // re-scan every 2-ish minutes if desired
+				string.Equals(argument, ReinitializeArgument, StringComparison.OrdinalIgnoreCase) // explicit request
+			) {
+				Log("Initializing.");
+				Initialize();
+			}
+			if (connector == null) {
+				Log("Could not find exactly one connector to monitor.");
+				return;
+			}
+
+			bool docked = connector.Status == MyShipConnectorStatus.Connected;
+			if (docked == wasDockedOnLastRun) {
+				return;
+			}
+			wasDockedOnLastRun = docked;
+
+			if (docked) {
+				Log("Docking");
+				Dock();
+			} else {
+				Log("Undocking");
+				Undock();
+			}
 		}
+
+		private void Dock() {
+			foreach (var battery in batteriesToRecharge) {
+				battery.ChargeMode = ChargeMode.Recharge;
+			}
+			foreach (var tank in tanksToStockpile) {
+				tank.Stockpile = true;
+			}
+			foreach (var block in blocksToDisable) {
+				block.Enabled = false;
+			}
+		}
+
+		private void Undock() {
+			foreach (var battery in batteriesToAuto) {
+				battery.ChargeMode = ChargeMode.Auto;
+			}
+			foreach (var tank in tanksToUnstockpile) {
+				tank.Stockpile = false;
+			}
+			foreach (var block in blocksToEnable) {
+				block.Enabled = true;
+			}
+		}
+
+		private void Initialize() {
+			blocksToEnable.Clear();
+			tanksToStockpile.Clear();
+			batteriesToRecharge.Clear();
+			blocksToDisable.Clear();
+			tanksToUnstockpile.Clear();
+			batteriesToAuto.Clear();
+
+			GridTerminalSystem.SearchBlocksOfName(DockingConnectorKey, terminalScratch);
+			if (terminalScratch.Count == 1 && terminalScratch[0] is IMyShipConnector) {
+				connector = terminalScratch[0] as IMyShipConnector;
+				wasDockedOnLastRun = connector.Status == MyShipConnectorStatus.Connected;
+			} else {
+				Echo("Could not find exactly one block to act as monitored connector.");
+				Log("Could not find exactly one block to act as monitored connector.");
+				return;
+			}
+
+			var toggleGroup = GridTerminalSystem.GetBlockGroupWithName(GroupToToggle);
+			var onGroup = GridTerminalSystem.GetBlockGroupWithName(GroupToEnable);
+			var offGroup = GridTerminalSystem.GetBlockGroupWithName(GroupToDisable);
+
+			if (toggleGroup != null) {
+				toggleGroup.GetBlocksOfType(scratch);
+				Log($"Found {scratch.Count} blocks to toggle.");
+				DistributeBlocks(scratch, batteriesToRecharge, tanksToStockpile, blocksToDisable);
+				DistributeBlocks(scratch, batteriesToAuto, tanksToUnstockpile, blocksToEnable);
+			}
+			if (onGroup != null) {
+				onGroup.GetBlocksOfType(scratch);
+				Log($"Found {scratch.Count} blocks to turn on.");
+				DistributeBlocks(scratch, batteriesToAuto, tanksToUnstockpile, blocksToEnable);
+			}
+			if (offGroup != null) {
+				offGroup.GetBlocksOfType(scratch);
+				Log($"Found {scratch.Count} blocks to turn off.");
+				DistributeBlocks(scratch, batteriesToRecharge, tanksToStockpile, blocksToDisable);
+			}
+
+			if (
+				((Runtime.UpdateFrequency & UpdateFrequency.Update10) != 0) &&
+				(
+					batteriesToAuto.Count > 0 ||
+					batteriesToRecharge.Count > 0 ||
+					tanksToStockpile.Count > 0 ||
+					tanksToUnstockpile.Count > 0 ||
+					blocksToEnable.Count > 0 ||
+					blocksToDisable.Count > 0
+				)
+			) {
+				Log("Setting update frequency to 10.");
+				Runtime.UpdateFrequency |= UpdateFrequency.Update10;
+			} else {
+				Log("Didn't find any blocks to modify; setting update frequency to 100.");
+				Runtime.UpdateFrequency = UpdateFrequency.Update100;
+			}
+
+		}
+
+		private static void DistributeBlocks(List<IMyFunctionalBlock> source, List<IMyBatteryBlock> batteries, List<IMyGasTank> tanks, List<IMyFunctionalBlock> remainder) {
+			foreach (var block in source) {
+				if (block is IMyBatteryBlock) {
+					batteries.Add(block as IMyBatteryBlock);
+				} else if (block is IMyGasTank) {
+					tanks.Add(block as IMyGasTank);
+				} else {
+					remainder.Add(block);
+				}
+			}
+		}
+
+		private void Log(string text) {
+			var surface = Me.GetSurface(0);
+			surface.ContentType = VRage.Game.GUI.TextPanel.ContentType.TEXT_AND_IMAGE;
+			surface.WriteText(text, append: true);
+			surface.WriteText(Environment.NewLine, append: true);
+		}
+
+		// scratch lists for performance
+		private List<IMyTerminalBlock> terminalScratch = new List<IMyTerminalBlock>();
+		private List<IMyFunctionalBlock> scratch = new List<IMyFunctionalBlock>();
 	}
 }
