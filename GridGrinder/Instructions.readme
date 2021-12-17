@@ -1,0 +1,20 @@
+﻿R e a d m e
+-----------
+
+Ensure 3 piston groups: X, Y, and Z, which include the config strings below.
+
+X and Y should be "horizontal" (and at right angles to each other) and Z "vertical", between X and Y.
+
+The grinder should be on the end of Y, with the grinder bits pointing "down" parallel to Z.
+The grinder will automatically be turned off and on as needed.
+
+So, storage (etc.) -> X -> turn "up" -> Z -> turn -> Y -> grinder.
+
+The sensor should be on the "top" of the grinder. Set the actions to call this block with the "detect" and "stopped detecting" arguments in config.
+The sensor will otherwise be automatically configured for you.
+
+The system will stop if the grid's in-use storage exceeds the total capacity * <fillMax> from config, and re-start there's sufficient capacity.
+The system does not re-scan for cargo; use the "calculate grid cargo" command to do so when you add/remove cargo from the grid.
+Simply removing stuff from storage will be detected.
+
+When done, all pistons should retract.
