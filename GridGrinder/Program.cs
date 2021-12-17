@@ -158,7 +158,7 @@ namespace IngameScript {
 			GridTerminalSystem.GetBlockGroupWithName(PistonGroupY).GetBlocksOfType(Y);
 			if (Y.Count == 0) {
 				Log("Could not find pistons in \"Y\" group.");
-				yield break; ;
+				yield break;
 			}
 			GridTerminalSystem.GetBlockGroupWithName(PistonGroupZ).GetBlocksOfType(Z);
 			if (Z.Count == 0) {
