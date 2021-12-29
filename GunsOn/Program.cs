@@ -59,21 +59,21 @@ namespace IngameScript {
 				ConfigureLargeConveyoredGuns();
 			}
 			foreach (var gun in _largeConveyoredGuns) {
-				gun.Enabled = true;
+				gun.Enabled = targetState;
 			}
 
 			yield return true;
 
 			GridTerminalSystem.GetBlocksOfType(_smallGatlingGuns);
 			foreach (var gun in _smallGatlingGuns) {
-				gun.Enabled = true;
+				gun.Enabled = targetState;
 			}
 
 			yield return true;
 
 			GridTerminalSystem.GetBlocksOfType(_smallMissileLaunchers);
 			foreach (var gun in _smallMissileLaunchers) {
-				gun.Enabled = true;
+				gun.Enabled = targetState;
 			}
 
 			yield return true;
