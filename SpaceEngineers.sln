@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GunsOn", "GunsOn\GunsOn.csproj", "{D055FFB2-6758-46F5-9A01-76012D4BA0CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PressurizedDoorManger", "PressurizedDoorManger\PressurizedDoorManger.csproj", "{FA14FDE3-437F-4607-8E1C-DB40C8F0708C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +25,10 @@ Global
 		{D148B2DA-98EE-4413-9C0D-E66E17737468}.Debug|x64.Build.0 = Debug|x64
 		{F8AF74DF-5A5C-4068-B552-BA4840A3311B}.Debug|x64.ActiveCfg = Debug|x64
 		{F8AF74DF-5A5C-4068-B552-BA4840A3311B}.Debug|x64.Build.0 = Debug|x64
+		{D055FFB2-6758-46F5-9A01-76012D4BA0CF}.Debug|x64.ActiveCfg = Debug|x64
+		{D055FFB2-6758-46F5-9A01-76012D4BA0CF}.Debug|x64.Build.0 = Debug|x64
+		{FA14FDE3-437F-4607-8E1C-DB40C8F0708C}.Debug|x64.ActiveCfg = Debug|x64
+		{FA14FDE3-437F-4607-8E1C-DB40C8F0708C}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
