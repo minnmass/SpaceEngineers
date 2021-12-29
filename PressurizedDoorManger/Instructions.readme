@@ -1,0 +1,28 @@
+﻿R e a d m e
+-----------
+
+Call with param "status" to see a count of the active invocations on the main display.
+
+Call with a parameter of the form "<doorGroupName>|<vent group name>".
+
+If either the door or vent group name is missing, all doors/vents (or both) on the grid will be used.
+
+If any doors in the group are open, immediately close all doors and set vents to pressurize. If there is no pipe in the argument, the argument is assumed to be the door block group.
+
+If all doors in the group are closed:
+1. set vents to depressurize
+2. wait until the first of:
+  * all vents are at 0% pressure 
+  * no vent has lost pressure for 10 ticks
+  * approximately 10 seconds have elapsed
+3. open all doors
+
+Each invocation on a new door group runs separately.
+
+Repeating an invocation with a door group already in process will cause the current invocation to be dropped (eg., a double-click will be treated as a single click).
+
+If there are too many delimiters ('|'), the invocation will do nothing.
+
+Each invocation re-scans the base for a new collection of blocks.
+
+If one invocation will pressurize vents and the other will depressurize the same vents, explosive decompresison may occur.
