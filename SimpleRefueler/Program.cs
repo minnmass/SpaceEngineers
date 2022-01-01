@@ -5,22 +5,22 @@ using Utilities;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
+		#region mdk preserve
 		private const string GroupToToggle = "Toggle On Dock";
 		private const string GroupToDisable = "Disable On Dock";
 		private const string GroupToEnable = "Enable On Undock";
 		private const string DockingConnectorKey = "[AutoToggle]";
 		private const string ReinitializeArgument = "initialize";
 		private const bool AutoScan = true;
+		#endregion
 
-		/// code below here
+		private readonly List<IMyFunctionalBlock> blocksToEnable = new List<IMyFunctionalBlock>();
+		private readonly List<IMyGasTank> tanksToStockpile = new List<IMyGasTank>();
+		private readonly List<IMyBatteryBlock> batteriesToRecharge = new List<IMyBatteryBlock>();
 
-		private List<IMyFunctionalBlock> blocksToEnable = new List<IMyFunctionalBlock>();
-		private List<IMyGasTank> tanksToStockpile = new List<IMyGasTank>();
-		private List<IMyBatteryBlock> batteriesToRecharge = new List<IMyBatteryBlock>();
-
-		private List<IMyFunctionalBlock> blocksToDisable = new List<IMyFunctionalBlock>();
-		private List<IMyGasTank> tanksToUnstockpile = new List<IMyGasTank>();
-		private List<IMyBatteryBlock> batteriesToAuto = new List<IMyBatteryBlock>();
+		private readonly List<IMyFunctionalBlock> blocksToDisable = new List<IMyFunctionalBlock>();
+		private readonly List<IMyGasTank> tanksToUnstockpile = new List<IMyGasTank>();
+		private readonly List<IMyBatteryBlock> batteriesToAuto = new List<IMyBatteryBlock>();
 
 		private IMyShipConnector connector;
 		private bool wasDockedOnLastRun = false;
@@ -157,7 +157,7 @@ namespace IngameScript {
 		}
 
 		// scratch lists for performance
-		private List<IMyTerminalBlock> terminalScratch = new List<IMyTerminalBlock>();
-		private List<IMyFunctionalBlock> scratch = new List<IMyFunctionalBlock>();
+		private readonly List<IMyTerminalBlock> terminalScratch = new List<IMyTerminalBlock>();
+		private readonly List<IMyFunctionalBlock> scratch = new List<IMyFunctionalBlock>();
 	}
 }

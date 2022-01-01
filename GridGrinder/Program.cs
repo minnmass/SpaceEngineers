@@ -10,6 +10,7 @@ using VRage;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
+		#region mdk preserve
 		private const string PistonGroupX = "[X]";
 		private const string PistonGroupY = "[Y]";
 		private const string PistonGroupZ = "[Z]";
@@ -21,8 +22,7 @@ namespace IngameScript {
 
 		private const float blockWidth = 2.5F;
 		private const float pistonVelocity = 0.5F;
-
-		// end config
+		#endregion
 
 		private readonly List<IMyPistonBase> X = new List<IMyPistonBase>();
 		private readonly List<IMyPistonBase> Y = new List<IMyPistonBase>();

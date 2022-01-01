@@ -4,10 +4,12 @@ using System.Collections.Generic;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
+		#region mdk preserve
 		private const string GunsOn = "on";
 		private const string GunsOff = "off";
 		private const bool ReconfigureWhenTurnedOn = true;
 		private const bool ReconfigureWhenTurnedOff = false;
+		#endregion
 
 		private readonly List<IMySmallGatlingGun> _smallGatlingGuns = new List<IMySmallGatlingGun>();
 		private readonly List<IMySmallMissileLauncher> _smallMissileLaunchers = new List<IMySmallMissileLauncher>();
