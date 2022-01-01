@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Sandbox.ModAPI.Ingame;
+using Utilities;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
@@ -24,7 +25,10 @@ namespace IngameScript {
 		private IMyShipConnector connector;
 		private bool wasDockedOnLastRun = false;
 
+		private readonly Logger _logger;
+
 		public Program() {
+			_logger = new Logger(Me);
 			Initialize();
 		}
 
@@ -34,11 +38,11 @@ namespace IngameScript {
 				(AutoScan && ((updateSource & UpdateType.Update100) != 0)) || // re-scan every 2-ish minutes if desired
 				string.Equals(argument, ReinitializeArgument, StringComparison.OrdinalIgnoreCase) // explicit request
 			) {
-				Log("Initializing.");
+				_logger.Log("Initializing.");
 				Initialize();
 			}
 			if (connector == null) {
-				Log("Could not find exactly one connector to monitor.");
+				_logger.Log("Could not find exactly one connector to monitor.");
 				return;
 			}
 
@@ -49,10 +53,10 @@ namespace IngameScript {
 			wasDockedOnLastRun = docked;
 
 			if (docked) {
-				Log("Docking");
+				_logger.Log("Docking");
 				Dock();
 			} else {
-				Log("Undocking");
+				_logger.Log("Undocking");
 				Undock();
 			}
 		}
@@ -95,7 +99,7 @@ namespace IngameScript {
 				wasDockedOnLastRun = connector.Status == MyShipConnectorStatus.Connected;
 			} else {
 				Echo("Could not find exactly one block to act as monitored connector.");
-				Log("Could not find exactly one block to act as monitored connector.");
+				_logger.Log("Could not find exactly one block to act as monitored connector.");
 				return;
 			}
 
@@ -105,18 +109,18 @@ namespace IngameScript {
 
 			if (toggleGroup != null) {
 				toggleGroup.GetBlocksOfType(scratch);
-				Log($"Found {scratch.Count} blocks to toggle.");
+				_logger.Log($"Found {scratch.Count} blocks to toggle.");
 				DistributeBlocks(scratch, batteriesToRecharge, tanksToStockpile, blocksToDisable);
 				DistributeBlocks(scratch, batteriesToAuto, tanksToUnstockpile, blocksToEnable);
 			}
 			if (onGroup != null) {
 				onGroup.GetBlocksOfType(scratch);
-				Log($"Found {scratch.Count} blocks to turn on.");
+				_logger.Log($"Found {scratch.Count} blocks to turn on.");
 				DistributeBlocks(scratch, batteriesToAuto, tanksToUnstockpile, blocksToEnable);
 			}
 			if (offGroup != null) {
 				offGroup.GetBlocksOfType(scratch);
-				Log($"Found {scratch.Count} blocks to turn off.");
+				_logger.Log($"Found {scratch.Count} blocks to turn off.");
 				DistributeBlocks(scratch, batteriesToRecharge, tanksToStockpile, blocksToDisable);
 			}
 
@@ -131,10 +135,10 @@ namespace IngameScript {
 					blocksToDisable.Count > 0
 				)
 			) {
-				Log("Setting update frequency to 10.");
+				_logger.Log("Setting update frequency to 10.");
 				Runtime.UpdateFrequency |= UpdateFrequency.Update10;
 			} else {
-				Log("Didn't find any blocks to modify; setting update frequency to 100.");
+				_logger.Log("Didn't find any blocks to modify; setting update frequency to 100.");
 				Runtime.UpdateFrequency = UpdateFrequency.Update100;
 			}
 
@@ -150,13 +154,6 @@ namespace IngameScript {
 					remainder.Add(block);
 				}
 			}
-		}
-
-		private void Log(string text) {
-			var surface = Me.GetSurface(0);
-			surface.ContentType = VRage.Game.GUI.TextPanel.ContentType.TEXT_AND_IMAGE;
-			surface.WriteText(text, append: true);
-			surface.WriteText(Environment.NewLine, append: true);
 		}
 
 		// scratch lists for performance
