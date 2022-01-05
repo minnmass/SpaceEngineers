@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Utilities;
 using VRage;
-using VRage.Game.GUI.TextPanel;
 
 // state machine inspired by https://github.com/malware-dev/MDK-SE/wiki/Coroutines---Run-operations-over-multiple-ticks
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
+		#region mdk preserve
 		private const string PistonGroupX = "[X]";
 		private const string PistonGroupY = "[Y]";
 		private const string PistonGroupZ = "[Z]";
@@ -21,6 +22,7 @@ namespace IngameScript {
 
 		private const float blockWidth = 2.5F;
 		private const float pistonVelocity = 0.5F;
+		#endregion
 
 		private readonly List<IMyPistonBase> X = new List<IMyPistonBase>();
 		private readonly List<IMyPistonBase> Y = new List<IMyPistonBase>();
@@ -35,8 +37,11 @@ namespace IngameScript {
 		private bool stoppedForCargo = false;
 		private bool unstoppedFromCargoGrinderStatus = false;
 
+		private readonly Logger _logger;
+
 		public Program() {
-			Log("Starting", firstLog: true);
+			_logger = new Logger(Me);
+			_logger.Log("Starting", append: false);
 			_stateMachine = InitialSetup().Concat(ExtendYToGrind()).GetEnumerator();
 			Runtime.UpdateFrequency = UpdateFrequency.Once;
 		}
@@ -46,11 +51,11 @@ namespace IngameScript {
 				switch (argument) {
 					case CalculateGridCargoCommand:
 						if (!CalculateGridCargo()) {
-							Log("Could not calculate cargo.");
+							_logger.Log("Could not calculate cargo.");
 						}
 						break;
 					default:
-						Log("Invalid command.");
+						_logger.Log("Invalid command.");
 						break;
 				}
 				return;
@@ -93,7 +98,7 @@ namespace IngameScript {
 						grinder.Enabled = false;
 						break;
 					default:
-						Log("Invalid argument.");
+						_logger.Log("Invalid argument.");
 						return;
 				}
 				foreach (var piston in X.Concat(Y).Concat(Z)) {
@@ -152,17 +157,17 @@ namespace IngameScript {
 		public IEnumerable<bool> InitialSetup() {
 			GridTerminalSystem.GetBlockGroupWithName(PistonGroupX).GetBlocksOfType(X);
 			if (X.Count == 0) {
-				Log("Could not find pistons in \"X\" group.");
+				_logger.Log("Could not find pistons in \"X\" group.");
 				yield break;
 			}
 			GridTerminalSystem.GetBlockGroupWithName(PistonGroupY).GetBlocksOfType(Y);
 			if (Y.Count == 0) {
-				Log("Could not find pistons in \"Y\" group.");
+				_logger.Log("Could not find pistons in \"Y\" group.");
 				yield break;
 			}
 			GridTerminalSystem.GetBlockGroupWithName(PistonGroupZ).GetBlocksOfType(Z);
 			if (Z.Count == 0) {
-				Log("Could not find pistons in \"Z\" group.");
+				_logger.Log("Could not find pistons in \"Z\" group.");
 				yield break;
 			}
 			yield return true;
@@ -176,7 +181,7 @@ namespace IngameScript {
 			var grinders = new List<IMyShipGrinder>();
 			GridTerminalSystem.GetBlocksOfType(grinders);
 			if (grinders.Count != 1) {
-				Log("Could not find exactly 1 grinder on the grid.");
+				_logger.Log("Could not find exactly 1 grinder on the grid.");
 				yield break;
 			}
 			grinder = grinders[0];
@@ -185,12 +190,12 @@ namespace IngameScript {
 			var sensors = new List<IMySensorBlock>();
 			GridTerminalSystem.GetBlocksOfType(sensors);
 			if (sensors.Count != 1) {
-				Log("Could not find exactly 1 sensor on the grid.");
+				_logger.Log("Could not find exactly 1 sensor on the grid.");
 				yield break;
 			}
 			sensor = sensors[0];
 
-			Log("No obvious problems. Continuing.");
+			_logger.Log("No obvious problems. Continuing.");
 
 			yield return true;
 
@@ -216,23 +221,23 @@ namespace IngameScript {
 
 			yield return true;
 
-			Log("Retracting Y");
+			_logger.Log("Retracting Y");
 			foreach (var i in MaximallyRetractAndPrepareToExtend(Y)) {
 				yield return i;
 			}
 
-			Log("Extending Z");
+			_logger.Log("Extending Z");
 			foreach (var i in MaximallyExtendAndPrepareToRetract(Z)) {
 				yield return i;
 			}
 
-			Log("Retracting X");
+			_logger.Log("Retracting X");
 			foreach (var i in MaximallyRetractAndPrepareToExtend(X)) {
 				yield return i;
 			}
 
 			Runtime.UpdateFrequency |= UpdateFrequency.Update100;
-			Log("Initialized.");
+			_logger.Log("Initialized.");
 
 			yield return true;
 		}
@@ -246,7 +251,7 @@ namespace IngameScript {
 		}
 
 		private IEnumerable<bool> Finished() {
-			Log("Done grinding.");
+			_logger.Log("Done grinding.");
 			grinder.Enabled = false;
 			sensor.Enabled = false;
 			yield break;
@@ -255,7 +260,7 @@ namespace IngameScript {
 		private bool CalculateGridCargo() {
 			GridTerminalSystem.GetBlocksOfType(cargoContainers);
 			if (cargoContainers.Count == 0) {
-				Log("Could not find cargo containers.");
+				_logger.Log("Could not find cargo containers.");
 				return false;
 			}
 			gridCargoCapacity = MyFixedPoint.Zero;
@@ -325,13 +330,6 @@ namespace IngameScript {
 				yield return true;
 			}
 			yield return true;
-		}
-
-		private void Log(string text, bool firstLog = false) {
-			var surface = Me.GetSurface(0);
-			surface.ContentType = ContentType.TEXT_AND_IMAGE;
-			surface.WriteText(text, append: !firstLog);
-			surface.WriteText(Environment.NewLine, append: true);
 		}
 	}
 }

@@ -3,32 +3,29 @@ using SpaceEngineers.Game.ModAPI.Ingame;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Utilities;
 
 namespace IngameScript {
 	partial class Program : MyGridProgram {
 		public Program() {
 			Runtime.UpdateFrequency = UpdateFrequency.None;
-			Log("Starting.", append: false);
+			_logger = new Logger(Me);
+			_logger.Log("Starting.", append: false);
 		}
+
+		private readonly Logger _logger;
 
 		private readonly LinkedList<StateMachine> _stateMachines = new LinkedList<StateMachine>();
 
 		public void Main(string argument, UpdateType updateSource) {
 			if ((updateSource & (UpdateType.Trigger | UpdateType.Terminal)) > 0) {
 				if (argument == "status") {
-					Log($"Monitoring {_stateMachines.Count} machines.", append: false);
+					_logger.Log($"Monitoring {_stateMachines.Count} machines.", append: false);
 					return;
 				}
 				_stateMachines.AddLast(new StateMachine(argument, this));
 			}
 			RunStateMachine();
-		}
-
-		private void Log(string text, bool append = true) {
-			var surface = Me.GetSurface(0);
-			surface.ContentType = VRage.Game.GUI.TextPanel.ContentType.TEXT_AND_IMAGE;
-			surface.WriteText(text, append: append);
-			surface.WriteText(Environment.NewLine, append: true);
 		}
 
 		public void RunStateMachine() {
@@ -44,7 +41,7 @@ namespace IngameScript {
 					ranSteps = true;
 				}
 				if (current.Value.Done) {
-					Log($"Done with {current.Value}.");
+					_logger.Log($"Done with {current.Value}.");
 					_stateMachines.Remove(current);
 				}
 				current = next;
@@ -115,13 +112,13 @@ namespace IngameScript {
 				Vents = InitArray<IMyAirVent>(terminal, VentGroup);
 				Doors = InitArray<IMyDoor>(terminal, DoorGroup);
 
-				Program.Log($"Found {Vents.Count} vents in group {VentGroup} and {Doors.Count} doors in group {DoorGroup}.");
+				Program._logger.Log($"Found {Vents.Count} vents in group {VentGroup} and {Doors.Count} doors in group {DoorGroup}.");
 
 				_ventPressures = new List<float>();
 				foreach (var vent in Vents) {
 					_ventPressures.Add(vent.GetOxygenLevel());
 				}
-				Program.Log($"Found {_ventPressures.Count} pressures for {Vents.Count} vents.");
+				Program._logger.Log($"Found {_ventPressures.Count} pressures for {Vents.Count} vents.");
 
 				_machine = Doors.Any(d => d.Status == DoorStatus.Open || d.Status == DoorStatus.Opening)
 					? SetDoorsStatus(toClosed: true)
@@ -149,12 +146,12 @@ namespace IngameScript {
 
 			private IEnumerable<bool> SetDoorsStatus(bool toClosed) {
 				if (toClosed) {
-					Program.Log($"Closing doors in group {DoorGroup}.");
+					Program._logger.Log($"Closing doors in group {DoorGroup}.");
 					foreach (var door in Doors) {
 						door.CloseDoor();
 					}
 				} else {
-					Program.Log($"Opening doors in group {DoorGroup}.");
+					Program._logger.Log($"Opening doors in group {DoorGroup}.");
 					foreach (var door in Doors) {
 						door.OpenDoor();
 					}
@@ -167,9 +164,9 @@ namespace IngameScript {
 			}
 
 			private IEnumerable<bool> WaitForDepressurization() {
-				Program.Log($"Examining {_ventPressures.Count} pressures for {Vents.Count} vents.");
+				Program._logger.Log($"Examining {_ventPressures.Count} pressures for {Vents.Count} vents.");
 				while (Vents.Any(v => !v.Depressurize)) {
-					Program.Log("Waiting for vents to start depressurizing.");
+					Program._logger.Log("Waiting for vents to start depressurizing.");
 					yield return true;
 				}
 				// delay to kickstart depressurization
@@ -179,10 +176,10 @@ namespace IngameScript {
 				for (int i = 0; i < Vents.Count; ++i) {
 					var ventPressure = Vents[i].GetOxygenLevel();
 					while (DateTime.UtcNow < endBy && ventPressure > 0 && Math.Abs(_ventPressures[i] - ventPressure) > minimumPressurizationDelta) {
-						Program.Log($"Depressurizing {VentGroup}.");
+						Program._logger.Log($"Depressurizing {VentGroup}.");
 						yield return true;
 					}
-					Program.Log($"Done depressurizing vent {i}.");
+					Program._logger.Log($"Done depressurizing vent {i}.");
 				}
 			}
 
