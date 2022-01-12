@@ -13,6 +13,7 @@ namespace IngameScript {
 		private const string RemoteControlName = null;
 		private const string InitializeCommand = "initialize";
 		private const string AbortCommand = "abort";
+		private const string SetDistanceDirectCommand = "jump";
 		#endregion
 
 		// todo: add support for an output LCD
@@ -30,6 +31,8 @@ namespace IngameScript {
 
 		private readonly Logger logger;
 		private readonly StateMachine stateMachine;
+
+		private bool deadReckoning = false;
 
 		public Program() {
 			logger = new Logger(Me);
@@ -51,8 +54,29 @@ namespace IngameScript {
 					stateMachine.Clear();
 					return;
 				}
+				if (argument.StartsWith(SetDistanceDirectCommand)) {
+					int lastSpaceIdx = argument.LastIndexOf(' ');
+					if (lastSpaceIdx <= argument.Length) {
+						logger.Log($"Invalid command: \"{argument}\".");
+						return;
+					}
+					var distanceStr = argument.Substring(lastSpaceIdx + 1);
+					float distance;
+					if (float.TryParse(distanceStr, out distance)) {
+						logger.Log($"Setting direct jump distance of {distance}m.");
+						stateMachine.Clear();
+						deadReckoning = true;
+						targetDistanceM = distance;
+						stateMachine.AddSteps(
+							SetJumpDistanceAndWait()
+							.Concat(DisplayMessage("Jump(s) complete."))
+						);
+					}
+				}
 				MyWaypointInfo gps;
-				if (MyWaypointInfo.TryParse(argument, out gps)) {
+				if (GPS.TryParsGpsMaybeWithColor(argument, out gps)) {
+					stateMachine.Clear();
+					deadReckoning = false;
 					logger.Log("Accepted coordinates.");
 					Target = gps.Coords;
 					stateMachine.AddSteps(
@@ -173,12 +197,22 @@ namespace IngameScript {
 
 		private IEnumerable<bool> ActivateRemote() {
 			remoteControl.SetAutoPilotEnabled(true);
+			logger.Log("Autopilot activated. Enjoy your flight.");
+			yield break;
+		}
+
+		private IEnumerable<bool> DisplayMessage(string message) {
+			logger.Log(message);
 			yield break;
 		}
 
 		// from or based on https://github.com/alenoi/SE-Jump-Navigator/blob/master/Jump%20Navigator/Program.cs
 		private void SetTargetDistance() {
-			targetDistanceM = (float)(remoteControl.GetPosition() - Target).Length();
+			if (deadReckoning) {
+				targetDistanceM -= jumpDrive.MaxJumpDistanceMeters;
+			} else {
+				targetDistanceM = (float)(remoteControl.GetPosition() - Target).Length();
+			}
 		}
 
 		public void SetOrientation(IMyGyro gyro) {
