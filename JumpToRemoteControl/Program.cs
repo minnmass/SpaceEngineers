@@ -56,8 +56,8 @@ namespace IngameScript {
 				}
 				if (argument.StartsWith(SetDistanceDirectCommand)) {
 					int lastSpaceIdx = argument.LastIndexOf(' ');
-					if (lastSpaceIdx <= argument.Length) {
-						logger.Log($"Invalid command: \"{argument}\".");
+					if (lastSpaceIdx >= argument.Length) {
+						logger.Log($"Invalid command: \"{argument}\". LastSpaceIdx = {lastSpaceIdx}, arg.Length = {argument.Length}");
 						return;
 					}
 					var distanceStr = argument.Substring(lastSpaceIdx + 1);
@@ -71,6 +71,8 @@ namespace IngameScript {
 							SetJumpDistanceAndWait()
 							.Concat(DisplayMessage("Jump(s) complete."))
 						);
+						stateMachine.RunMachine(runNextTick: true);
+						return;
 					}
 				}
 				MyWaypointInfo gps;
@@ -156,7 +158,7 @@ namespace IngameScript {
 
 		private IEnumerable<bool> AlignShip() {
 			SetTargetDistance();
-			if (targetDistanceM < jumpDrive.MinJumpDistanceMeters) {
+			if (deadReckoning || targetDistanceM < jumpDrive.MinJumpDistanceMeters) {
 				yield break;
 			}
 			do {
@@ -184,14 +186,19 @@ namespace IngameScript {
 				while (jumpDrive.Status != MyJumpDriveStatus.Ready) {
 					yield return true;
 				}
-				string jumpReadyMessage = $"Ready to jump {targetDistanceM} meters with jump drive \"{jumpDrive.DisplayName}\".";
+				string jumpReadyMessage = $"Ready to jump {targetDistanceM} meters with jump drive \"{jumpDrive.DisplayNameText}\".";
 				logger.Log(jumpReadyMessage);
 				Echo(jumpReadyMessage);
 				jumpDrive.JumpDistanceMeters = Math.Min(targetDistanceM, jumpDrive.MaxJumpDistanceMeters);
 				while (jumpDrive.Status != MyJumpDriveStatus.Jumping) {
 					yield return true;
 				}
-				SetTargetDistance();
+				logger.Log("Jump complete, new distance set.");
+				// account for inaccuracies in long trips
+				foreach (var _ in AlignShip()) {
+					yield return true;
+				}
+				yield return true;
 			}
 		}
 
