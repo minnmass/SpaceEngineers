@@ -29,13 +29,15 @@ namespace IngameScript {
 
 		private Vector3D Target;
 
-		private readonly Logger logger;
 		private readonly StateMachine stateMachine;
 
 		private bool deadReckoning = false;
 
+		private readonly string _waitingForReadyMessage = $"Waiting{Environment.NewLine}for drives{Environment.NewLine}to be{Environment.NewLine}ready.";
+		private readonly string _waitingForOtherDrivesMessage = $"Waiting{Environment.NewLine}for{Environment.NewLine}other drives.";
+		private readonly string _readyToJumpMessage = $"Ready{Environment.NewLine}to{Environment.NewLine}jump!";
+
 		public Program() {
-			logger = new Logger(Me);
 			stateMachine = new StateMachine(Runtime);
 
 			Initialize();
@@ -44,7 +46,6 @@ namespace IngameScript {
 		}
 
 		public void Main(string argument, UpdateType updateSource) {
-			logger.Log("Processing...", append: false);
 			if ((updateSource & triggerUpdates) != 0) {
 				if (argument == InitializeCommand) {
 					Initialize();
@@ -57,19 +58,19 @@ namespace IngameScript {
 				if (argument.StartsWith(SetDistanceDirectCommand)) {
 					int lastSpaceIdx = argument.LastIndexOf(' ');
 					if (lastSpaceIdx >= argument.Length) {
-						logger.Log($"Invalid command: \"{argument}\". LastSpaceIdx = {lastSpaceIdx}, arg.Length = {argument.Length}");
+						Echo($"Invalid command: \"{argument}\".");
 						return;
 					}
 					var distanceStr = argument.Substring(lastSpaceIdx + 1);
 					float distance;
 					if (float.TryParse(distanceStr, out distance)) {
-						logger.Log($"Setting direct jump distance of {distance}m.");
+						Echo($"Setting direct jump distance of {distance}m.");
 						stateMachine.Clear();
 						deadReckoning = true;
 						targetDistanceM = distance;
 						stateMachine.AddSteps(
 							SetJumpDistanceAndWait()
-							.Concat(DisplayMessage("Jump(s) complete."))
+							.Concat(DisplayMessage("Ready"))
 						);
 						stateMachine.RunMachine(runNextTick: true);
 						return;
@@ -79,16 +80,16 @@ namespace IngameScript {
 				if (GPS.TryParsGpsMaybeWithColor(argument, out gps)) {
 					stateMachine.Clear();
 					deadReckoning = false;
-					logger.Log("Accepted coordinates.");
 					Target = gps.Coords;
 					stateMachine.AddSteps(
 						SetRemoteCoordinates()
-						.Concat(AlignShip())
+						.Concat(AlignShipAndUpdateDistance())
 						.Concat(SetJumpDistanceAndWait())
 						.Concat(ActivateRemote())
+						.Concat(DisplayMessage("Ready"))
 					);
 				} else {
-					logger.Log($"Invalid argument: \"{argument}\".");
+					Echo($"Invalid argument: \"{argument}\".");
 					return;
 				}
 			}
@@ -98,46 +99,41 @@ namespace IngameScript {
 
 		#region initialize
 		private void Initialize() {
-			logger.Log("Initializing.", append: false);
+			Echo("Initializing.");
 			if (!FindJumpDrive()) {
-				logger.Log("Could not find a jump drive.");
+				Echo("Could not find a jump drive.");
 				return;
 			}
 			if (!FindRemote()) {
-				logger.Log("Could not find remote.");
+				Echo("Could not find remote.");
 				return;
 			}
 			if (!FindGyros()) {
-				logger.Log("Could not find gyros.");
+				Echo("Could not find gyros.");
 				return;
 			}
-			logger.Log("Found all key blocks.");
+			Echo("Found all key blocks.");
 		}
 
 		private bool FindGyros() {
-			logger.Log("Finding gyros");
 			GridTerminalSystem.GetBlocksOfType(gyros);
 			return gyros.Count > 0;
 		}
 
 		private bool FindJumpDrive() {
-			logger.Log("Finding jump drive");
 			jumpDrive = FindBlock(JumpDriveName, jumpDrives);
 			return jumpDrive != null;
 		}
 
 		private bool FindRemote() {
-			logger.Log("Finding remote");
 			remoteControl = FindBlock(RemoteControlName, remoteControls);
 			return remoteControl != null;
 		}
 
 		private T FindBlock<T>(string name, List<T> list) where T : class {
 			if (name != null) {
-				logger.Log($"Looking for block named {name}.");
 				return GridTerminalSystem.GetBlockWithName(name) as T;
 			}
-			logger.Log("Looking for the first instance.");
 			GridTerminalSystem.GetBlocksOfType(list);
 			if (list.Count > 0) {
 				return list[0];
@@ -156,9 +152,8 @@ namespace IngameScript {
 
 		private float targetDistanceM;
 
-		private IEnumerable<bool> AlignShip() {
-			SetTargetDistance();
-			if (deadReckoning || targetDistanceM < jumpDrive.MinJumpDistanceMeters) {
+		private IEnumerable<bool> AlignShipAndUpdateDistance() {
+			if (deadReckoning) {
 				yield break;
 			}
 			do {
@@ -176,45 +171,61 @@ namespace IngameScript {
 				gyro.GyroOverride = false;
 			}
 
-			logger.Log("Oriented.");
+			yield return true;
+
+			UpdateTargetDistance();
+
+			Echo("Oriented.");
 			yield break;
 		}
 
 		private IEnumerable<bool> SetJumpDistanceAndWait() {
+			bool firstLoop = true;
 			while (targetDistanceM > jumpDrive.MinJumpDistanceMeters) {
 				// for multi-jump, wait for charging to complete; also waits for a jump in-process
+				Echo(_waitingForReadyMessage);
 				while (jumpDrive.Status != MyJumpDriveStatus.Ready) {
 					yield return true;
 				}
-				string jumpReadyMessage = $"Ready to jump {targetDistanceM} meters with jump drive \"{jumpDrive.DisplayNameText}\".";
-				logger.Log(jumpReadyMessage);
-				Echo(jumpReadyMessage);
+				GridTerminalSystem.GetBlocksOfType(jumpDrives);
+				Echo(_waitingForOtherDrivesMessage);
+				while (jumpDrives.Any(d => d.IsWorking && d.Status != MyJumpDriveStatus.Ready)) {
+					yield return true;
+				}
+				if (deadReckoning && !firstLoop) {
+					// update here since updating a jump drive's blind jump distance while it's recharging doesn't work
+					UpdateTargetDistance();
+				}
+				firstLoop = false;
 				jumpDrive.JumpDistanceMeters = Math.Min(targetDistanceM, jumpDrive.MaxJumpDistanceMeters);
+				Echo(_readyToJumpMessage);
 				while (jumpDrive.Status != MyJumpDriveStatus.Jumping) {
 					yield return true;
 				}
-				logger.Log("Jump complete, new distance set.");
-				// account for inaccuracies in long trips
-				foreach (var _ in AlignShip()) {
-					yield return true;
+				if (!deadReckoning) {
+					// no need to automatically re-orient for dead-reckoning
+					// plus, dead-reckoning recalculates desired distance after recharging
+					// account for inaccuracies in long trips
+					foreach (var _ in AlignShipAndUpdateDistance()) {
+						Echo("Aligning.");
+						yield return true;
+					}
 				}
-				yield return true;
 			}
 		}
 
 		private IEnumerable<bool> ActivateRemote() {
 			remoteControl.SetAutoPilotEnabled(true);
-			logger.Log("Autopilot activated. Enjoy your flight.");
 			yield break;
 		}
 
 		private IEnumerable<bool> DisplayMessage(string message) {
-			logger.Log(message);
+			Echo(message);
 			yield break;
 		}
 
 		// from or based on https://github.com/alenoi/SE-Jump-Navigator/blob/master/Jump%20Navigator/Program.cs
-		private void SetTargetDistance() {
+		private void UpdateTargetDistance() {
 			if (deadReckoning) {
 				targetDistanceM -= jumpDrive.MaxJumpDistanceMeters;
 			} else {
