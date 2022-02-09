@@ -29,7 +29,7 @@ namespace IngameScript {
 
 		private Vector3D Target;
 
-		private readonly StateMachine stateMachine;
+		private readonly StepMachine stepMachine;
 
 		private bool deadReckoning = false;
 
@@ -38,7 +38,7 @@ namespace IngameScript {
 		private readonly string _readyToJumpMessage = $"Ready{Environment.NewLine}to{Environment.NewLine}jump!";
 
 		public Program() {
-			stateMachine = new StateMachine(Runtime);
+			stepMachine = new StepMachine(Runtime);
 
 			Initialize();
 
@@ -52,7 +52,7 @@ namespace IngameScript {
 					return;
 				}
 				if (argument == AbortCommand) {
-					stateMachine.Clear();
+					stepMachine.Clear();
 					return;
 				}
 				if (argument.StartsWith(SetDistanceDirectCommand)) {
@@ -65,23 +65,23 @@ namespace IngameScript {
 					float distance;
 					if (float.TryParse(distanceStr, out distance)) {
 						Echo($"Setting direct jump distance of {distance}m.");
-						stateMachine.Clear();
+						stepMachine.Clear();
 						deadReckoning = true;
 						targetDistanceM = distance;
-						stateMachine.AddSteps(
+						stepMachine.AddSteps(
 							SetJumpDistanceAndWait()
 							.Concat(DisplayMessage("Ready"))
 						);
-						stateMachine.RunMachine(runNextTick: true);
+						stepMachine.RunMachine(runNextTick: true);
 						return;
 					}
 				}
 				MyWaypointInfo gps;
 				if (GPS.TryParsGpsMaybeWithColor(argument, out gps)) {
-					stateMachine.Clear();
+					stepMachine.Clear();
 					deadReckoning = false;
 					Target = gps.Coords;
-					stateMachine.AddSteps(
+					stepMachine.AddSteps(
 						SetRemoteCoordinates()
 						.Concat(AlignShipAndUpdateDistance())
 						.Concat(SetJumpDistanceAndWait())
@@ -94,7 +94,7 @@ namespace IngameScript {
 				}
 			}
 
-			stateMachine.RunMachine(runNextTick: true);
+			stepMachine.RunMachine(runNextTick: true);
 		}
 
 		#region initialize

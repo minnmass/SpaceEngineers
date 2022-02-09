@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 
 namespace Utilities {
-	public class StateMachine {
+	public class StepMachine {
 		private IEnumerator<bool> _machine;
 		private IEnumerable<bool> _nextMachine;
 
 		private readonly IMyGridProgramRuntimeInfo _runtime;
 
-		public StateMachine(IMyGridProgramRuntimeInfo runtime) {
+		public StepMachine(IMyGridProgramRuntimeInfo runtime) {
 			_runtime = runtime;
 		}
 
