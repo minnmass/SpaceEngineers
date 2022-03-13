@@ -1,0 +1,8 @@
+﻿R e a d m e
+-----------
+
+Set <DHDName> to the full name of the DHD set to dial the desired target gate.
+
+Set <EjectorName> to the name of the ejecting connector.
+
+Requires an LCD whose name contains <StatusLCD> to monitor gate status. Using "Stargate" will automagically work with the Stargate mod.
