@@ -18,10 +18,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PressurizedDoorManger", "Pr
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Utilities", "Utilities\Utilities.shproj", "{17A0635F-4257-435F-9F40-7059C08AAB46}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpToRemoteControl", "JumpToRemoteControl\JumpToRemoteControl.csproj", "{890CEBB7-2059-472D-B829-667C23E53169}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetActions", "GetActions\GetActions.csproj", "{E384712A-883B-4832-A79C-E691D8CBD05A}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Utilities\Utilities.projitems*{17a0635f-4257-435f-9f40-7059c08aab46}*SharedItemsImports = 13
+		Utilities\Utilities.projitems*{890cebb7-2059-472d-b829-667c23e53169}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{d148b2da-98ee-4413-9c0d-e66e17737468}*SharedItemsImports = 4
+		Utilities\Utilities.projitems*{e384712a-883b-4832-a79c-e691d8cbd05a}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{f8af74df-5a5c-4068-b552-ba4840a3311b}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{fa14fde3-437f-4607-8e1c-db40c8f0708c}*SharedItemsImports = 4
 	EndGlobalSection
@@ -37,6 +43,10 @@ Global
 		{D055FFB2-6758-46F5-9A01-76012D4BA0CF}.Debug|x64.Build.0 = Debug|x64
 		{FA14FDE3-437F-4607-8E1C-DB40C8F0708C}.Debug|x64.ActiveCfg = Debug|x64
 		{FA14FDE3-437F-4607-8E1C-DB40C8F0708C}.Debug|x64.Build.0 = Debug|x64
+		{890CEBB7-2059-472D-B829-667C23E53169}.Debug|x64.ActiveCfg = Debug|x64
+		{890CEBB7-2059-472D-B829-667C23E53169}.Debug|x64.Build.0 = Debug|x64
+		{E384712A-883B-4832-A79C-E691D8CBD05A}.Debug|x64.ActiveCfg = Debug|x64
+		{E384712A-883B-4832-A79C-E691D8CBD05A}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

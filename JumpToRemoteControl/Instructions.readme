@@ -1,0 +1,18 @@
+﻿R e a d m e
+-----------
+
+To specify which jump drive or remote control to control, set their names in the `private static string`.
+Leave set to `null` to use the first the script happens to find.
+If either is null, the script will try to find a working jump drive or remote control block if the one it first found is missing or otherwise nonfunctional.
+
+Remote control must be facing in the direction the ship should jump.
+
+Uses all gyros found on the grid.
+
+Invoke with a copied GPS entry as the parameter to set remote control block and jump drive to that coordinate.
+	Re-running (possibly with new coordinates) will remove the old target.
+Run with "initialize" to re-initialize the blocks in use.
+Run with "abort" to cancel the current operation. A new GPS coordinate will also do this as a side-effect.
+Run with "jump <distance>" to jump <distance> meters (min jump distance = 5000). This will abort any existing process, and will allow for multiple jumps.
+
+Orientation and distance code based on https://steamcommunity.com/sharedfiles/filedetails/?id=2345388643
