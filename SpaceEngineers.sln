@@ -22,9 +22,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JumpToRemoteControl", "Jump
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetActions", "GetActions\GetActions.csproj", "{E384712A-883B-4832-A79C-E691D8CBD05A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommunicationBus", "CommunicationBus\CommunicationBus.csproj", "{80E9B57B-5B05-45DA-B597-5293B7153FA4}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Utilities\Utilities.projitems*{17a0635f-4257-435f-9f40-7059c08aab46}*SharedItemsImports = 13
+		Utilities\Utilities.projitems*{80e9b57b-5b05-45da-b597-5293b7153fa4}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{890cebb7-2059-472d-b829-667c23e53169}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{d148b2da-98ee-4413-9c0d-e66e17737468}*SharedItemsImports = 4
 		Utilities\Utilities.projitems*{e384712a-883b-4832-a79c-e691d8cbd05a}*SharedItemsImports = 4
@@ -47,6 +50,8 @@ Global
 		{890CEBB7-2059-472D-B829-667C23E53169}.Debug|x64.Build.0 = Debug|x64
 		{E384712A-883B-4832-A79C-E691D8CBD05A}.Debug|x64.ActiveCfg = Debug|x64
 		{E384712A-883B-4832-A79C-E691D8CBD05A}.Debug|x64.Build.0 = Debug|x64
+		{80E9B57B-5B05-45DA-B597-5293B7153FA4}.Debug|x64.ActiveCfg = Debug|x64
+		{80E9B57B-5B05-45DA-B597-5293B7153FA4}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

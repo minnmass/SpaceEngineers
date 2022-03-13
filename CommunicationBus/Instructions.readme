@@ -1,0 +1,13 @@
+﻿R e a d m e
+-----------
+
+<broadcast[_current|_connected]|unicast_<target[,target2,target3]>> <tag1>[,tag2,tag3] <message with spaces, punctuation, etc.>
+
+eg. "broadcast_current tag1,tag2 send this message to anyone on the current grid listening to tag1 or tag2"
+eg. "unicast_12345 tag1,tag2 send this message directly to PB ID 12345 and attach the tags tag1 and tag2"
+
+Broadcast defaults to "antenna" distance. Use "_current" to limit to the current construct, "_connected" to limit to physically connected constructs (including docked constructs).
+
+Unicast targets must be `long`s.
+
+Listen channel must be alphanumeric, '-', or '_'. Broadcast tags broadcast to those channels, so have the same limits.
